@@ -1,4 +1,4 @@
-import .denon as Denon
+from . import denon as Denon
 import argparse
 
 def main():
