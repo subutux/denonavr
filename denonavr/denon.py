@@ -10,7 +10,14 @@ MAINZONE_INPUT="/MainZone/index.put.asp?cmd0={cmd}"
 ## Only supports actions without return :(
 HTTP_TELNET_CMD="/goform/formiPhoneAppDirect.xml?{telnetcmd}"
 
-class Denon():
+def Connect(ip,zone="MAINZONE"):
+    """
+    Returns a instance of Zone
+    """
+    return Zone(ip,zone)
+
+
+class Zone():
     def __init__(self,ip,zone="MAINZONE"):
         self.ip = ip
         self.zone = zone
