@@ -1,5 +1,6 @@
 import requests
 import xml.etree.ElementTree as ET
+__version__ = "0.1b1"
 #Constants
 URL="http://{ip}{get}"
 STATUS="/goform/formMainZone_MainZoneXml.xml?_=&ZoneName={zone}"
