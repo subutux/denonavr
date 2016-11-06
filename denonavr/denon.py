@@ -3,7 +3,9 @@ import xml.etree.ElementTree as ET
 __version__ = "0.1b1"
 #Constants
 URL="http://{ip}{get}"
-STATUS="/goform/formMainZone_MainZoneXml.xml?_=&ZoneName={zone}"
+STATUS="/goform/formMainZone_MainZoneXml.xml?ZoneName={zone}"
+NETSTATUS="/goform/formNetAudio_StatusXml.xml?ZoneName={zone}"
+NETCMD="/NetAudio/index.put.asp"
 CH_STATUS="/goform/formMainZone_MainZoneXmlStatus.xml"
 STATUS_LITE="/goform/formMainZone_MainZoneXmlStatusLite.xml" #?
 ZONE2_STATUS="goform/formMainZone_MainZoneXml.xml?_=&ZoneName=ZONE2" # ?
@@ -17,9 +19,9 @@ SET_VOL="/goform/formiPhoneAppVolume.xml?{"
 ##    Wich is loud! (very!) We set a max here
 ##    to spare our ears when things go south
 # So , here we have a max of -50dB
-MAX_VOLUME_dB="50"
+MAX_VOLUME_dB=50
 
-def Connect(ip,zone="MAINZONE"):
+def Connect(ip,zone="MAIN+ZONE"):
     """
     Returns a instance of Zone
     """
@@ -27,7 +29,7 @@ def Connect(ip,zone="MAINZONE"):
 
 
 class Zone():
-    def __init__(self,ip,zone="MAINZONE"):
+    def __init__(self,ip,zone="MAIN+ZONE"):
         self.ip = ip
         self.zone = zone
         self._status = {
@@ -55,6 +57,7 @@ class Zone():
             "Zone2VolDisp" : ""
         }
         self._inputs = {}
+        self._szLines = []
         self.updateStatus()
         self.updateInputs()
     def updateStatus(self):
@@ -67,6 +70,11 @@ class Zone():
             self._status[child.tag] = child[0].text
         
         self._volume = self._status["MasterVolume"]
+
+        r = requests.get(URL.format(ip=self.ip,get=NETSTATUS.format(zone=self.zone)))
+        tree = ET.fromstring(r.text)
+        for line in tree.findall("szLine")[0]:
+            self._szLines.append(line.text)
         return True
     def updateInputs(self):
         """
@@ -100,6 +108,31 @@ class Zone():
         return self._status["Power"]
     
     @property
+    def nowPlaying(self):
+        """
+        returns the Playing information.
+
+        If we detect a NetInput, check for the NETSTATUS for more detailled
+        information.
+        """
+        if self._status['InputFuncSelect'] in ('Online Music','iPod/USB','Bluetooth'):
+            return {
+            "INPUT": self._status['InputFuncSelect'],
+            "SONG": self._szLines[1],
+            "ARTIST": self._szLines[2],
+            "ALBUM" : self._szLines[3],
+            "ALBUM_ART": "http://{ip}/NetAudio/art.asp-jpg".format(ip=self.ip)
+            }
+        else:
+            return {
+            "INPUT": self._status['InputFuncSelect'],
+            "SONG": None,
+            "ARTIST": None,
+            "ALBUM" : None,
+            "ALBUM_ART": None
+            }
+
+    @property
     def name(self):
         return self._status["FriendlyName"]
     @property
@@ -107,7 +140,7 @@ class Zone():
         return self._status["RenameZone"]
     @property
     def input(self):
-        return self._status["inputFuncSelect"]
+        return self._status["InputFuncSelect"]
     
     @property
     def volume(self):
@@ -129,4 +162,59 @@ class Zone():
         if value[:2] == "dB":
             self._volume == value[:2]
             self.cmd("SI")
-    
+    def netCmd(self,cmd):
+        """
+        Sends a netAudioCommand.
+
+        There are more supported. See below.
+
+        Commands
+        ========
+
+        Commands can be executed is sequence.
+        for example. to go 1 down & 1 right
+        you post the following data:
+
+        cmd0=PutNetAudioCommand/CurDown
+        cmd1=osThreadSleep/50
+        cmd2=PutNetAudioCommand/CurRight
+
+        Following are known to work:
+
+        PutNetAudioCommand/
+        -------------------
+        * CurEnter
+        * CurUp
+        * CurDown
+        * CurLeft
+        * CurRight
+        * CmdStop
+        * CmdPageUp
+        * CmdPageDown
+        * UsbRepOn
+        * UsbRepAll
+        * UsbRepOff
+        * UsbRanOn
+        * UsbRanOff
+        * Search+([1-9]|[A-Z])
+        
+        PutMasterVolumeBtn/
+        -------------------
+        * `>` Volume Up
+        * `<` Volume Down
+
+        PutVolumeMute/
+        -------------------
+        * TOGGLE
+        osThreadSleep/
+        -------------
+        * `int()` (`50` is used in the WebUI)
+
+        aspMainZone_WebUpdateStatus/
+        ----------------------------
+        UNKNOWN
+        """
+        postData = {
+        "cmd0": "PutNetAudioCommand/{cmd}".format(cmd=cmd)
+        }
+        r = requests.post(URL.format(ip=self.ip,get=NETCMD),data=postData)
