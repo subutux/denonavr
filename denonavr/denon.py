@@ -1,6 +1,6 @@
 import requests
 import xml.etree.ElementTree as ET
-__version__ = "0.1b1"
+__version__ = "0.4b1"
 #Constants
 URL="http://{ip}{get}"
 STATUS="/goform/formMainZone_MainZoneXml.xml?ZoneName={zone}"
@@ -15,11 +15,10 @@ MAINZONE_INPUT="/MainZone/index.put.asp?cmd0={cmd}"
 HTTP_TELNET_CMD="/goform/formiPhoneAppDirect.xml?{telnetcmd}"
 SET_VOL="/goform/formiPhoneAppVolume.xml?{"
 # The maximum volume allowed to be set.
-## -> normally, the max volume is arround -60dB
+## -> normally, the max volume is arround 100-110
 ##    Wich is loud! (very!) We set a max here
 ##    to spare our ears when things go south
-# So , here we have a max of -50dB
-MAX_VOLUME_dB=50
+MAX_VOLUME=50
 
 def Connect(ip,zone="MAIN+ZONE"):
     """
@@ -70,7 +69,7 @@ class Zone():
             self._status[child.tag] = child[0].text
         
         self._volume = self._status["MasterVolume"]
-
+        self._szLines = []
         r = requests.get(URL.format(ip=self.ip,get=NETSTATUS.format(zone=self.zone)))
         tree = ET.fromstring(r.text)
         for line in tree.findall("szLine")[0]:
@@ -91,7 +90,35 @@ class Zone():
             if use.text == "USE":
                 # get friendly name & add                             Fix the extra spaces at the end
                 self._inputs[inputAvr.text] = { "friendly_name" : ' '.join(rename[0].text.split())  }
-        
+                # Some extras:
+
+                if inputAvr.text == "Bluetooth":
+                    self._inputs[inputAvr.text]["NetName"] = "BT"
+
+        ## Special Inputs, according to ModelId
+        ## For more info, see index.js L 434
+        ### EnModelARX10 & EnModelNR15
+        if self._status["ModelId"] in ("1","7"):
+            self._inputs["Online Music"] = {
+            "friendly_name": "Online Music",
+            "NetName" : "NETHOME"
+            }
+            self._inputs["Tuner"] = {
+            "friendly_name": "Tuner",
+            "NetName" : "TUNER"
+            }
+            self._inputs["Internet Radio"] = {
+            "friendly_name": "Internet Radio",
+            "NetName" : "IRP"
+            }
+
+
+    def isVolumeAbsolute(self):
+        if self._status["VolumeDisplay"] == "Absolute":
+            return True
+        else:
+            return False
+
     def cmd(self,telnetcmd):
         """
         Execute Telnet fire & forget (or better, fire & hope for the best) calls over http
@@ -116,12 +143,16 @@ class Zone():
         information.
         """
         if self._status['InputFuncSelect'] in ('Online Music','iPod/USB','Bluetooth'):
+            if self._status['InputFuncSelect'] == "Bluetooth":
+                art = "http://{ip}/img/album%20art_BT.png"
+            else:
+                art = "http://{ip}/NetAudio/art.asp-jpg"
             return {
             "INPUT": self._status['InputFuncSelect'],
             "SONG": self._szLines[1],
             "ARTIST": self._szLines[2],
             "ALBUM" : self._szLines[3],
-            "ALBUM_ART": "http://{ip}/NetAudio/art.asp-jpg".format(ip=self.ip)
+            "ALBUM_ART": art.format(ip=self.ip)
             }
         else:
             return {
@@ -144,25 +175,75 @@ class Zone():
     
     @property
     def volume(self):
-        return "{volume} dB".format(volume=self._status["MasterVolume"])
+        vol = self._status["MasterVolume"]
+
+        if self.isVolumeAbsolute():
+            if vol == "--":
+                vol = -80.0
+            vol = float(vol) + 80
+            return float("{0:.2f}".format(vol))
+        else:
+            return float(vol); 
+    
     @property
     def volume_percent(self):
-        #                                 remove "-"
-        #                                        |   remove dB
-        #                                        |    |
-        clean_vol = self._status["MasterVolume"][1:][:2]
-        clean_vol = int(clean_vol)
-        return round((clean_vol / MAX_VOLUME_dB) * 100,2)
+        """
+        Get the volume in percentage. Use the MAX_VOLUME
+        to calculate the percentage.
+        """
+        clean_vol = self.volume
+        return round((clean_vol / MAX_VOLUME) * 100)
     
     
     @volume.setter
     def volume(self,value):
-        # Detect if we need to handle a percent value
-        # or a dB value
-        if value[:2] == "dB":
-            self._volume == value[:2]
-            self.cmd("SI")
-    def netCmd(self,cmd):
+        """
+        If the value is larger then MAX_VOLUME,
+        set it to MAX_VOLUME.
+        """
+        if value > MAX_VOLUME:
+            value = MAX_VOLUME
+        if self.isVolumeAbsolute():
+            vol = float(value) - 80
+            vol = float("{0:.2f}".format(vol))
+            self.netCmd(mcmd="PutMasterVolumeSet",cmd=str(vol)) 
+    @volume_percent.setter
+    def volume_percent(self,value):
+        """
+        Convert the value to the actual volume
+        """
+        vol = (float(value) * MAX_VOLUME ) / 100
+        self.volume = vol
+
+    def volume_up(self):
+        self.netCmd(">",mcmd="PutMasterVolumeBtn")
+    
+    def volume_down(self):
+        self.netCmd("<",mcmd="PutMasterVolumeBtn")
+
+    def setInput(self,inputFunction):
+        inputF = None
+        if inputFunction not in self._inputs:
+            # try to check if it's a friendly_name
+            for inp in self._inputs:
+                if self._inputs[inp]["friendly_name"] == inputFunction:
+                    inputF = inp
+                    break
+
+        else:
+            inputF = inputFunction
+        
+        if inputF is None:
+            raise Exception("Unknown input {}".format(inputFunction))
+
+        if "NetName" in self._inputs[inputF]:
+            print("Got NetName")
+            inputF = self._inputs[inputF]["NetName"]
+        
+        r = self.netCmd(cmd=inputF,mcmd="PutZone_InputFunction")
+
+
+    def netCmd(self,cmd,mcmd="PutNetAudioCommand"):
         """
         Sends a netAudioCommand.
 
@@ -215,6 +296,8 @@ class Zone():
         UNKNOWN
         """
         postData = {
-        "cmd0": "PutNetAudioCommand/{cmd}".format(cmd=cmd)
+        "cmd0": "{mcmd}/{cmd}".format(mcmd=mcmd,cmd=cmd)
         }
+        print(postData)
         r = requests.post(URL.format(ip=self.ip,get=NETCMD),data=postData)
+        print (r.text)
