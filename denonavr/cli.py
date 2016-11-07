@@ -10,7 +10,7 @@ def main():
 	args = p.parse_args();
 	
 	MAINZONE=Denon.Connect(args.host,args.zone)
-	MAINZONE.exec(args.CMD)
+	MAINZONE.telCmd(args.CMD)
 
 	
 	
