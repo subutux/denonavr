@@ -61,16 +61,24 @@ class Zone():
         self.updateInputs()
     def updateStatus(self):
         """
-        Update the status
+        Update the status of this denon reciever
         """
-        r = requests.get(URL.format(ip=self.ip,get=STATUS.format(zone=self.zone)))
+        try:
+            r = requests.get(URL.format(ip=self.ip,get=STATUS.format(zone=self.zone)))
+        except requests.exceptions.RequestException:
+            return False
+
         tree = ET.fromstring(r.text)
         for child in tree:
             self._status[child.tag] = child[0].text
         
         self._volume = self._status["MasterVolume"]
         self._szLines = []
-        r = requests.get(URL.format(ip=self.ip,get=NETSTATUS.format(zone=self.zone)))
+        try:
+            r = requests.get(URL.format(ip=self.ip,get=NETSTATUS.format(zone=self.zone)))
+        except requests.exceptions.RequestException:
+            return False
+        
         tree = ET.fromstring(r.text)
         for line in tree.findall("szLine")[0]:
             self._szLines.append(line.text)
@@ -79,7 +87,12 @@ class Zone():
         """
         Get the channel list & determine it's friendly name & if it's hidden or not
         """
+        try:
+
         r = requests.get(URL.format(ip=self.ip,get=CH_STATUS))
+        except requests.exceptions.RequestException:
+            return False
+
         tree = ET.fromstring(r.text)
         
         # Loop over the AVR Inputs, their RenameSource, SourceDelete & add them to self._inputs
@@ -114,6 +127,9 @@ class Zone():
 
 
     def isVolumeAbsolute(self):
+        """
+        Check if the volume returned is absolute.
+        """
         if self._status["VolumeDisplay"] == "Absolute":
             return True
         else:
@@ -123,15 +139,21 @@ class Zone():
         """
         Execute Telnet fire & forget (or better, fire & hope for the best) calls over http
         """
-        
-        r = requests.get(URL.format(ip=self.ip,get=HTTP_TELNET_CMD.format(telnetcmd=telnetcmd)))
-        if r.status_code == 200:
-            return True
-        else:
+        try:
+            r = requests.get(URL.format(ip=self.ip,get=HTTP_TELNET_CMD.format(telnetcmd=telnetcmd)))
+            if r.status_code == 200:
+                return True
+            else:
+                return False
+        except requests.exceptions.RequestException:
             return False
-    
+
     @property
     def state(self):
+        """
+        Returns the current state of the denon reciever.
+        Can be ON or STANDBY
+        """
         return self._status["Power"]
     
     @property
@@ -165,16 +187,28 @@ class Zone():
 
     @property
     def name(self):
+        """
+        Return the name of this denon avr
+        """
         return self._status["FriendlyName"]
     @property
     def zoneName(self):
+        """
+        return the zone name
+        """
         return self._status["RenameZone"]
     @property
     def input(self):
+        """
+        Return the current input/source
+        """
         return self._status["InputFuncSelect"]
     
     @property
     def volume(self):
+        """
+        Return the current volume.
+        """
         vol = self._status["MasterVolume"]
 
         if self.isVolumeAbsolute():
@@ -206,22 +240,35 @@ class Zone():
         if self.isVolumeAbsolute():
             vol = float(value) - 80
             vol = float("{0:.2f}".format(vol))
-            self.netCmd(mcmd="PutMasterVolumeSet",cmd=str(vol)) 
+            return self.netCmd(mcmd="PutMasterVolumeSet",cmd=str(vol)) 
     @volume_percent.setter
     def volume_percent(self,value):
         """
-        Convert the value to the actual volume
+        Convert the value to the actual volume & set it
+        as the current volume.
         """
         vol = (float(value) * MAX_VOLUME ) / 100
         self.volume = vol
 
     def volume_up(self):
-        self.netCmd(">",mcmd="PutMasterVolumeBtn")
+        """
+        Increase the volume
+        """
+        return self.netCmd(">",mcmd="PutMasterVolumeBtn")
     
     def volume_down(self):
-        self.netCmd("<",mcmd="PutMasterVolumeBtn")
+        """
+        Decrease the volume
+        """
+        return self.netCmd("<",mcmd="PutMasterVolumeBtn")
 
     def setInput(self,inputFunction):
+        """
+        Set the current input/source for the reciever
+
+        It tries to find the correct input based on the
+        inputFunction & the self._inputs
+        """
         inputF = None
         if inputFunction not in self._inputs:
             # try to check if it's a friendly_name
@@ -240,8 +287,20 @@ class Zone():
             print("Got NetName")
             inputF = self._inputs[inputF]["NetName"]
         
-        r = self.netCmd(cmd=inputF,mcmd="PutZone_InputFunction")
+        return self.netCmd(cmd=inputF,mcmd="PutZone_InputFunction")
 
+
+    def turnOn(self):
+        """
+        Turn the system On
+        """
+        return self.netCmd("ON",mcmd="PutSystem_OnStandby")
+    
+    def turnOff(self):
+        """
+        Set the system in Standby/off
+        """
+        return self.netCmd("STANDBY",mcmd="PutSystem_OnStandby")
 
     def netCmd(self,cmd,mcmd="PutNetAudioCommand"):
         """
@@ -298,6 +357,8 @@ class Zone():
         postData = {
         "cmd0": "{mcmd}/{cmd}".format(mcmd=mcmd,cmd=cmd)
         }
-        print(postData)
+        try:
+
         r = requests.post(URL.format(ip=self.ip,get=NETCMD),data=postData)
-        print (r.text)
+        except requests.exceptions.RequestException:
+            return False
