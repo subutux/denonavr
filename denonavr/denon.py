@@ -10,7 +10,7 @@ CH_STATUS="/goform/formMainZone_MainZoneXmlStatus.xml"
 STATUS_LITE="/goform/formMainZone_MainZoneXmlStatusLite.xml" #?
 ZONE2_STATUS="goform/formMainZone_MainZoneXml.xml?_=&ZoneName=ZONE2" # ?
 ZONE2_STATUS_LITE="goform/formZone2_Zone2XmlStatusLite.xml"
-MAINZONE_INPUT="/MainZone/index.put.asp?cmd0={cmd}"
+MAINZONECMD="/MainZone/index.put.asp"
 ## Only supports actions without return :(
 HTTP_TELNET_CMD="/goform/formiPhoneAppDirect.xml?{telnetcmd}"
 SET_VOL="/goform/formiPhoneAppVolume.xml?{"
@@ -106,7 +106,8 @@ class Zone():
 
                 if inputAvr.text == "Bluetooth":
                     self._inputs[inputAvr.text]["NetName"] = "BT"
-
+                if inputAvr.text == "CBL/SAT":
+                    self._inputs[inputAvr.text]["NetName"] = "SAT"
         ## Special Inputs, according to ModelId
         ## For more info, see index.js L 434
         ### EnModelARX10 & EnModelNR15
@@ -132,19 +133,6 @@ class Zone():
         if self._status["VolumeDisplay"] == "Absolute":
             return True
         else:
-            return False
-
-    def cmd(self,telnetcmd):
-        """
-        Execute Telnet fire & forget (or better, fire & hope for the best) calls over http
-        """
-        try:
-            r = requests.get(URL.format(ip=self.ip,get=HTTP_TELNET_CMD.format(telnetcmd=telnetcmd)))
-            if r.status_code == 200:
-                return True
-            else:
-                return False
-        except requests.exceptions.RequestException:
             return False
 
     @property
@@ -218,16 +206,6 @@ class Zone():
         else:
             return float(vol); 
     
-    @property
-    def volume_percent(self):
-        """
-        Get the volume in percentage. Use the MAX_VOLUME
-        to calculate the percentage.
-        """
-        clean_vol = self.volume
-        return round((clean_vol / MAX_VOLUME) * 100)
-    
-    
     @volume.setter
     def volume(self,value):
         """
@@ -240,6 +218,17 @@ class Zone():
             vol = float(value) - 80
             vol = float("{0:.2f}".format(vol))
             return self.netCmd(mcmd="PutMasterVolumeSet",cmd=str(vol)) 
+    
+    @property
+    def volume_percent(self):
+        """
+        Get the volume in percentage. Use the MAX_VOLUME
+        to calculate the percentage.
+        """
+        clean_vol = self.volume
+        return round((clean_vol / MAX_VOLUME) * 100)
+    
+    
     @volume_percent.setter
     def volume_percent(self,value):
         """
@@ -286,20 +275,20 @@ class Zone():
             print("Got NetName")
             inputF = self._inputs[inputF]["NetName"]
         
-        return self.netCmd(cmd=inputF,mcmd="PutZone_InputFunction")
+        return self.zoneCmd(cmd=inputF,mcmd="PutZone_InputFunction")
 
 
     def turnOn(self):
         """
         Turn the system On
         """
-        return self.netCmd("ON",mcmd="PutSystem_OnStandby")
+        return self.zoneCmd("ON",mcmd="PutSystem_OnStandby")
     
     def turnOff(self):
         """
         Set the system in Standby/off
         """
-        return self.netCmd("STANDBY",mcmd="PutSystem_OnStandby")
+        return self.zoneCmd("STANDBY",mcmd="PutSystem_OnStandby")
 
     def netCmd(self,cmd,mcmd="PutNetAudioCommand"):
         """
@@ -359,5 +348,31 @@ class Zone():
         print(postData)
         try:
             r = requests.post(URL.format(ip=self.ip,get=NETCMD),data=postData)
+        except requests.exceptions.RequestException:
+            return False
+    def zoneCmd(self,cmd,mcmd="PutSystem_OnStandby"):
+        """
+        Sends a PutSystem_OnStandby command
+        """
+        getData = {
+        "cmd0": "{mcmd}/{cmd}".format(mcmd=mcmd,cmd=cmd),
+        "cmd1": "aspMainZone_WebUpdateStatus/"
+        }
+        try:
+            r = requests.get(URL.format(ip=self.ip,get=MAINZONECMD),params=getData)
+            print(r.text,r.url)
+        except requests.exceptions.RequestException:
+            return False
+
+    def telCmd(self,telnetcmd):
+        """
+        Execute Telnet fire & forget (or better, fire & hope for the best) calls over http
+        """
+        try:
+            r = requests.get(URL.format(ip=self.ip,get=HTTP_TELNET_CMD.format(telnetcmd=telnetcmd)))
+            if r.status_code == 200:
+                return True
+            else:
+                return False
         except requests.exceptions.RequestException:
             return False
