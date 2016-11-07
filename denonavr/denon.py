@@ -78,7 +78,7 @@ class Zone():
             r = requests.get(URL.format(ip=self.ip,get=NETSTATUS.format(zone=self.zone)))
         except requests.exceptions.RequestException:
             return False
-        
+
         tree = ET.fromstring(r.text)
         for line in tree.findall("szLine")[0]:
             self._szLines.append(line.text)
@@ -88,8 +88,7 @@ class Zone():
         Get the channel list & determine it's friendly name & if it's hidden or not
         """
         try:
-
-        r = requests.get(URL.format(ip=self.ip,get=CH_STATUS))
+            r = requests.get(URL.format(ip=self.ip,get=CH_STATUS))
         except requests.exceptions.RequestException:
             return False
 
@@ -357,8 +356,8 @@ class Zone():
         postData = {
         "cmd0": "{mcmd}/{cmd}".format(mcmd=mcmd,cmd=cmd)
         }
+        print(postData)
         try:
-
-        r = requests.post(URL.format(ip=self.ip,get=NETCMD),data=postData)
+            r = requests.post(URL.format(ip=self.ip,get=NETCMD),data=postData)
         except requests.exceptions.RequestException:
             return False
