@@ -1,6 +1,6 @@
 import requests
 import xml.etree.ElementTree as ET
-__version__ = "0.5b1"
+__version__ = "0.5b2"
 #Constants
 URL="http://{ip}{get}"
 STATUS="/goform/formMainZone_MainZoneXml.xml?ZoneName={zone}"
@@ -13,7 +13,7 @@ ZONE2_STATUS_LITE="goform/formZone2_Zone2XmlStatusLite.xml"
 MAINZONECMD="/MainZone/index.put.asp"
 ## Only supports actions without return :(
 HTTP_TELNET_CMD="/goform/formiPhoneAppDirect.xml?{telnetcmd}"
-SET_VOL="/goform/formiPhoneAppVolume.xml?{"
+#SET_VOL="/goform/formiPhoneAppVolume.xml?{"
 # The maximum volume allowed to be set.
 ## -> normally, the max volume is arround 100-110
 ##    Wich is loud! (very!) We set a max here
@@ -322,7 +322,11 @@ class Zone():
         
         return self.zoneCmd(cmd=inputF,mcmd="PutZone_InputFunction")
 
-
+    @property
+    def inputs(self):
+        
+        inputs = [inp for inp in self._inputs]
+    
     def turnOn(self):
         """
         Turn the system On
