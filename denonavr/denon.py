@@ -1,6 +1,6 @@
 import requests
 import xml.etree.ElementTree as ET
-__version__ = "0.4b1"
+__version__ = "0.5b1"
 #Constants
 URL="http://{ip}{get}"
 STATUS="/goform/formMainZone_MainZoneXml.xml?ZoneName={zone}"
@@ -249,6 +249,51 @@ class Zone():
         Decrease the volume
         """
         return self.netCmd("<",mcmd="PutMasterVolumeBtn")
+
+    @property
+    def mute(self):
+        """
+        Return true if muted
+        """
+        return self._status["Mute"] is "off"
+
+    @mute.setter
+    def mute(self,mute):
+        """
+        set mute based on true/false
+        """
+        self.zoneCmd(('on' if mute else 'off'),mcmd="PutVolumeMute")
+    
+    def play(self):
+        """
+        Send the play button
+        """
+        self.telCmd("NS9A")
+
+    def pause(self):
+        """
+        send the pause button
+        """
+        self.telCmd("NS9B")
+
+    def stop(self):
+        """
+        send the stop button
+        """
+        self.telCmd("NS9C")
+
+    def next_track(self):
+
+        """
+        send the next button
+        """
+        self.telCmd("NS9D")
+
+    def previous_track(self):
+        """
+        send the previous button
+        """
+        self.telCmd("NS9E")
 
     def setInput(self,inputFunction):
         """
