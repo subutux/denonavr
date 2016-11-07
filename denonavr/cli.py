@@ -11,7 +11,3 @@ def main():
 	
 	MAINZONE=Denon.Connect(args.host,args.zone)
 	MAINZONE.telCmd(args.CMD)
-
-	
-	
-
