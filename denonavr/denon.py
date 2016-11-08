@@ -1,6 +1,6 @@
 import requests
 import xml.etree.ElementTree as ET
-__version__ = "0.5b2"
+__version__ = "0.5b3"
 #Constants
 URL="http://{ip}{get}"
 STATUS="/goform/formMainZone_MainZoneXml.xml?ZoneName={zone}"
@@ -325,7 +325,7 @@ class Zone():
     @property
     def inputs(self):
         
-        inputs = [inp for inp in self._inputs]
+        return [inp for inp in self._inputs]
     
     def turnOn(self):
         """
