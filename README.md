@@ -1,6 +1,23 @@
 # denonavr
 A python library to interact with an Denon AVR
 
+## denonavr.denon
+
+### Usage
+
+```python
+from denonavr import denon
+#                        your denon ip
+myDenon = denon.Connect('192.168.1.20')
+```
+
+See the file [denon.py](denonavr/denon.py) for possible options,
+or use pydoc to view the documentation:
+
+```bash
+pydoc denonavr.denon
+```
+
 ## Denon-cli
 
 ### Usage:
