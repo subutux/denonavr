@@ -1,7 +1,7 @@
 import requests
 import logging
 import xml.etree.ElementTree as ET
-__version__ = "0.6b1"
+__version__ = "0.6b2"
 # Constants
 URL = "http://{ip}{get}"
 STATUS = "/goform/formMainZone_MainZoneXml.xml?ZoneName={zone}"
@@ -69,7 +69,7 @@ class Zone():
         """
         try:
             url = URL.format(ip=self.ip, get=STATUS.format(zone=self.zone))
-            _LOGGER.debug("GET {url}".format(url))
+            _LOGGER.debug("GET {url}".format(url=url))
             r = requests.get(url)
             _LOGGER.debug("Recieve")
             _LOGGER.debug(r.text)
@@ -85,7 +85,7 @@ class Zone():
         self._szLines = []
         try:
             url = URL.format(ip=self.ip, get=NETSTATUS.format(zone=self.zone))
-            _LOGGER.debug("GET {url}".format(url))
+            _LOGGER.debug("GET {url}".format(url=url))
             r = requests.get(url)
             _LOGGER.debug("Recieve")
             _LOGGER.debug(r.text)
@@ -109,7 +109,7 @@ class Zone():
         """
         try:
             url = URL.format(ip=self.ip, get=CH_STATUS)
-            _LOGGER.debug("GET {url}".format(url))
+            _LOGGER.debug("GET {url}".format(url=url))
             r = requests.get(url)
             _LOGGER.debug("Recieve")
             _LOGGER.debug(r.text)
