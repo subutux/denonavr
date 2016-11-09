@@ -1,7 +1,7 @@
 import requests
 import logging
 import xml.etree.ElementTree as ET
-__version__ = "0.6b2"
+__version__ = "0.6b3"
 # Constants
 URL = "http://{ip}{get}"
 STATUS = "/goform/formMainZone_MainZoneXml.xml?ZoneName={zone}"
@@ -71,8 +71,8 @@ class Zone():
             url = URL.format(ip=self.ip, get=STATUS.format(zone=self.zone))
             _LOGGER.debug("GET {url}".format(url=url))
             r = requests.get(url)
-            _LOGGER.debug("Recieve")
-            _LOGGER.debug(r.text)
+            # _LOGGER.debug("Recieve")
+            # _LOGGER.debug(r.text)
         except requests.exceptions.RequestException as e:
             _LOGGER.error("Unable to fetch the status from {}".format(self.ip))
             _LOGGER.debug("requests.exceptions.RequestException: {}".format(e))
@@ -87,8 +87,8 @@ class Zone():
             url = URL.format(ip=self.ip, get=NETSTATUS.format(zone=self.zone))
             _LOGGER.debug("GET {url}".format(url=url))
             r = requests.get(url)
-            _LOGGER.debug("Recieve")
-            _LOGGER.debug(r.text)
+            # _LOGGER.debug("Recieve")
+            # _LOGGER.debug(r.text)
         except requests.exceptions.RequestException as e:
             _LOGGER.error(
                 "Unable to fetch the netstatus from {}".format(self.ip)
@@ -111,8 +111,8 @@ class Zone():
             url = URL.format(ip=self.ip, get=CH_STATUS)
             _LOGGER.debug("GET {url}".format(url=url))
             r = requests.get(url)
-            _LOGGER.debug("Recieve")
-            _LOGGER.debug(r.text)
+            # _LOGGER.debug("Recieve")
+            # _LOGGER.debug(r.text)
         except requests.exceptions.RequestException as e:
             _LOGGER.error(
                 "Unable to fetch the status from {}:".format(self.ip)
