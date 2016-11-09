@@ -135,7 +135,7 @@ class Zone():
                 inputAvr.text
                 ))
             # check if we need to add it
-            if use.text == "USE":
+            if use.text != "DEL":
                 self._inputs[inputAvr.text] = {
                     "friendly_name": ' '.join(rename[0].text.split())
                     }
@@ -146,23 +146,6 @@ class Zone():
                 if inputAvr.text == "CBL/SAT":
                     _LOGGER.debug("Adding NetName for CBL/SAT")
                     self._inputs[inputAvr.text]["NetName"] = "SAT"
-        # Special Inputs, according to ModelId
-        # For more info, see index.js L 434
-        #   EnModelARX10 & EnModelNR15
-        if self._status["ModelId"] in ("1", "7"):
-            _LOGGER.debug("Got model 1 or 7 (EnModelARX10 or EnModelNR15)")
-            self._inputs["Online Music"] = {
-                "friendly_name": "Online Music",
-                "NetName": "NETHOME"
-            }
-            self._inputs["Tuner"] = {
-                "friendly_name": "Tuner",
-                "NetName": "TUNER"
-            }
-            self._inputs["Internet Radio"] = {
-                "friendly_name": "Internet Radio",
-                "NetName": "IRP"
-            }
 
     def isVolumeAbsolute(self):
         """
