@@ -28,8 +28,8 @@ DENON_PLAYER_SUPPORT = \
 
 REQUIREMENTS = [
     'https://github.com/subutux/denonavr/'
-    'archive/c326ccbbe7bf48de7f99a019a4751f1c7dda45d5.zip'
-    '#denonavr==0.6b1'
+    'archive/0106a1d40d03a882e78f37d09b348f9f0376701a.zip'
+    '#denonavr==0.6b2'
 ]
 
 
