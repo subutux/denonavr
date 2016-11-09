@@ -143,7 +143,7 @@ class DenonDevice(MediaPlayerDevice):
             return self.denon.nowPlaying["INPUT"]
         else:
             return "{}: {} - {}".format(self.denon.nowPlaying["INPUT"],
-                                   self.denon.nowPlaying["ARTIST"]
+                                   self.denon.nowPlaying["ARTIST"],
                                    self.denon.nowPlaying["SONG"])
 
     @property
