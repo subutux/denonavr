@@ -1,7 +1,7 @@
 import requests
 import logging
 import xml.etree.ElementTree as ET
-__version__ = "0.7b1"
+__version__ = "0.7b2"
 # Constants
 URL = "http://{ip}{get}"
 STATUS = "/goform/formMainZone_MainZoneXml.xml?ZoneName={zone}"
@@ -146,6 +146,17 @@ class Zone():
                 if inputAvr.text == "CBL/SAT":
                     _LOGGER.debug("Adding NetName for CBL/SAT")
                     self._inputs[inputAvr.text]["NetName"] = "SAT"
+        # Special Inputs, according to ModelId
+        # For more info, see index.js L 434
+        #   EnModelARX10 & EnModelNR15
+        if self._status["ModelId"] in ("1", "7"):
+            _LOGGER.debug(
+                "Got model 1 or 7 (EnModelARX10 or EnModelNR15), adding IRP"
+                )
+            self._inputs["Internet Radio"] = {
+                "friendly_name": "Internet Radio",
+                "NetName": "IRP"
+            }
 
     def isVolumeAbsolute(self):
         """
