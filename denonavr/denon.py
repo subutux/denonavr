@@ -139,24 +139,72 @@ class Zone():
                 self._inputs[inputAvr.text] = {
                     "friendly_name": ' '.join(rename[0].text.split())
                     }
-                # Some extras:
+                # Most of the inputs need a command name other then
+                # the actual input name
                 if inputAvr.text == "Bluetooth":
                     _LOGGER.debug("Adding NetName for bluetooth")
                     self._inputs[inputAvr.text]["NetName"] = "BT"
                 if inputAvr.text == "CBL/SAT":
                     _LOGGER.debug("Adding NetName for CBL/SAT")
                     self._inputs[inputAvr.text]["NetName"] = "SAT"
+                if inputAvr.text == "Media Player":
+                    _LOGGER.debug("Adding NetName for Media Player")
+                    self._inputs[inputAvr.text]["NetName"] = "MPLAY"
+                if inputAvr.text == "DVD/Blu-ray":
+                    _LOGGER.debug("Adding NetName for DVD/Blu-ray")
+                    self._inputs[inputAvr.text]["NetName"] = "DVD"
+                if inputAvr.text == "Blu-ray":
+                    _LOGGER.debug("Adding NetName for Blu-ray")
+                    self._inputs[inputAvr.text]["NetName"] = "BD"
+                if inputAvr.text == "iPod/USB":
+                    _LOGGER.debug("Adding NetName for iPod/USB")
+                    self._inputs[inputAvr.text]["NetName"] = "USB/IPOD"
+                if inputAvr.text == "TV Audio":
+                    _LOGGER.debug("Adding NetName for TV Audio")
+                    self._inputs[inputAvr.text]["NetName"] = "TV"
+                if inputAvr.text == "Tuner":
+                    _LOGGER.debug("Adding NetName for Tuner")
+                    self._inputs[inputAvr.text]["NetName"] = "TUNER"
+                if inputAvr.text == "Online Music":
+                    _LOGGER.debug("Adding NetName for Online Music")
+                    self._inputs[inputAvr.text]["NetName"] = "NETHOME"
+                if inputAvr.text == "Phono":
+                    _LOGGER.debug("Adding NetName for Phono")
+                    self._inputs[inputAvr.text]["NetName"] = "PHONO"
+                if inputAvr.text == "HD Radio":
+                    _LOGGER.debug("Adding NetName for HD Radio")
+                    self._inputs[inputAvr.text]["NetName"] = "HDRADIO"
         # Special Inputs, according to ModelId
         # For more info, see index.js L 434
         #   EnModelARX10 & EnModelNR15
-        if self._status["ModelId"] in ("1", "7"):
+        if self._status["ModelId"] in ("1", "7", "2", "3", "8", "9"):
             _LOGGER.debug(
-                "Got model 1 or 7 (EnModelARX10 or EnModelNR15), adding IRP"
+                "Got one of model EnModelARX10 EnModelNR15  EnModelAVRX2\
+                EnModelAVRX30  EnModelNR16 EnModelSR50, adding IRP"
                 )
             self._inputs["Internet Radio"] = {
                 "friendly_name": "Internet Radio",
                 "NetName": "IRP"
             }
+        #  EnModelAVRX2 EnModelAVRX30  EnModelNR16 EnModelSR50
+        elif self._status["ModelId"] in ("2", "3", "8", "9"):
+            _LOGGER.debug(
+                "Got one of models  EnModelAVRX2 EnModelAVRX30  EnModelNR16\
+                EnModelSR50, adding SERVER"
+                )
+            self._inputs["Media Server"] = {
+                "friendly_name": "Media Server",
+                "NetName": "SERVER"
+            }
+            # Don't know if these are returned by CH_STATUS
+            # self._inputs["AUX1"] = {
+            #     "friendly_name": "AUX1",
+            #     "NetName": "AUX1"
+            # }
+            # self._inputs["AUX2"] = {
+            #     "friendly_name": "AUX2",
+            #     "NetName": "AUX2"
+            # }
 
     def isVolumeAbsolute(self):
         """
