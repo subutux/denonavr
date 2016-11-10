@@ -1,7 +1,7 @@
 import requests
 import logging
 import xml.etree.ElementTree as ET
-__version__ = "0.7b2"
+__version__ = "0.7b3"
 # Constants
 URL = "http://{ip}{get}"
 STATUS = "/goform/formMainZone_MainZoneXml.xml?ZoneName={zone}"
