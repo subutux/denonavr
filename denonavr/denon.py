@@ -338,7 +338,7 @@ class Zone():
         """
         Return true if muted
         """
-        return self._status["Mute"] is "off"
+        return self._status["Mute"] == "off"
 
     @mute.setter
     def mute(self, mute):
