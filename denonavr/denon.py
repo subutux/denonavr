@@ -17,7 +17,7 @@ HTTP_TELNET_CMD = "/goform/formiPhoneAppDirect.xml?{telnetcmd}"
 # SET_VOL="/goform/formiPhoneAppVolume.xml?{"
 # The maximum volume allowed to be set.
 # -> normally, the max volume is arround 100-110
-#    Wich is loud! (very!) We set a max here
+#    Which is loud! (very!) We set a max here
 #    to spare our ears when things go south
 MAX_VOLUME = 50
 _LOGGER = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ def Connect(ip, zone="MAIN+ZONE"):
     return Zone(ip, zone)
 
 
-class Zone():
+class Zone(object):
     def __init__(self, ip, zone="MAIN+ZONE"):
         self.ip = ip
         self.zone = zone
@@ -65,7 +65,7 @@ class Zone():
 
     def updateStatus(self):
         """
-        Update the status of this denon reciever
+        Update the status of this denon receiver
         """
         try:
             url = URL.format(ip=self.ip, get=STATUS.format(zone=self.zone))
@@ -104,7 +104,7 @@ class Zone():
 
     def updateInputs(self):
         """
-        Get the channel list & determine it's friendly name
+        Get the channel list & determine its friendly name
         & if it's hidden or not
         """
         try:
@@ -218,7 +218,7 @@ class Zone():
     @property
     def state(self):
         """
-        Returns the current state of the denon reciever.
+        Returns the current state of the denon receiver.
         Can be ON or STANDBY
         """
         return self._status["Power"]
@@ -228,7 +228,7 @@ class Zone():
         """
         returns the Playing information.
 
-        If we detect a NetInput, check for the NETSTATUS for more detailled
+        If we detect a NetInput, check for the NETSTATUS for more detailed
         information.
         """
         if self._status['InputFuncSelect'] in ('Online Music',
@@ -380,7 +380,7 @@ class Zone():
 
     def setInput(self, inputFunction):
         """
-        Set the current input/source for the reciever
+        Set the current input/source for the receiver
 
         It tries to find the correct input based on the
         inputFunction & the self._inputs
@@ -434,7 +434,7 @@ class Zone():
         Commands
         ========
 
-        Commands can be executed is sequence.
+        Commands can be executed in sequence.
         for example. to go 1 down & 1 right
         you post the following data:
 
