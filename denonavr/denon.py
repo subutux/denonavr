@@ -30,7 +30,7 @@ def Connect(ip, zone="MAIN+ZONE"):
     return Zone(ip, zone)
 
 
-class Zone():
+class Zone(object):
     def __init__(self, ip, zone="MAIN+ZONE"):
         self.ip = ip
         self.zone = zone
